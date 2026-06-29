@@ -85,3 +85,7 @@ For input reliability checks:
 ## Trust Model
 
 desktop.html skins are local programs written in HTML, CSS, and JavaScript. They can open files, run commands, start applications, and access network resources through the desktop bridge. Only install skins from sources you trust.
+
+## License
+
+desktop.html is licensed under GPL-3.0-or-later.
