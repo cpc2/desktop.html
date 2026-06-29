@@ -1,0 +1,21 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+TestResults/
+
+# Local agent/tool state
+.agents/
+.claude/
+.codex/
+
+# Local secrets/config
+.env
+.env.*
+
+# Local implementation notes
+TOPWEB_IMPLEMENTATION.md
+
+# Local sample skins / desktop snapshots
+samples/
