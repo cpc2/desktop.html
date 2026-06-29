@@ -1,3 +1,7 @@
+I should preface this by saying this is "vibe coded", I haven't touched any code myself. It also allows you to run any command from the skin, so use this at your own risk. I had this done for my personal use because I think a desktop works best as a fully customizable website. Codex wrote the rest of this readme so I don't swear by it, but it should explain more in detail how it works and how to set it up.
+
+---
+
 # desktop.html
 
 `desktop.html` is a Windows 11 desktop runtime that loads trusted local HTML/CSS/JavaScript skins into a WebView2-powered desktop surface.
