@@ -9,6 +9,7 @@ public sealed class SkinScaffoldServiceTests
     [InlineData("classic")]
     [InlineData("launcher")]
     [InlineData("dashboard")]
+    [InlineData("rabbits")]
     public async Task ScaffoldAsync_CreatesValidSkin(string template)
     {
         using var temp = TempDirectory.Create();
@@ -22,6 +23,10 @@ public sealed class SkinScaffoldServiceTests
         Assert.True(validation.IsValid, string.Join(Environment.NewLine, validation.Errors));
         Assert.Contains("manifest.json", result.Files);
         Assert.Contains("index.html", result.Files);
+        if (template == "rabbits")
+        {
+            Assert.Contains("rabbits-theme.js", result.Files);
+        }
     }
 
     [Fact]

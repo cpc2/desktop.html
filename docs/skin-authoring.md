@@ -114,6 +114,34 @@ await window.desktop.storage.remove("count");
 await window.desktop.storage.clear();
 ```
 
+## Optional Hundred Rabbits Themes
+
+Skins may opt into the Hundred Rabbits 9-color SVG theme convention by including a local `rabbits-theme.js` helper. This is skin-side only; the runtime does not enforce or inject global theme behavior.
+
+Scaffold a starter:
+
+```powershell
+.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin scaffold my.rabbits --template rabbits --json
+```
+
+The helper exposes:
+
+```js
+const theme = window.DesktopHtmlRabbitsTheme.createController({
+  target: document.documentElement,
+  storageKey: "rabbits-theme",
+  defaultTheme,
+  onLoad: activeTheme => render(activeTheme)
+});
+
+await theme.start();
+await theme.load(svgTextOrThemeObject);
+theme.openFilePicker();
+theme.enableDropImport(document.body);
+```
+
+Themes must provide `background`, `f_high`, `f_med`, `f_low`, `f_inv`, `b_high`, `b_med`, `b_low`, and `b_inv`. The helper injects compatible variables such as `--background` and namespaced aliases such as `--rabbits-background`, persists with `window.desktop.storage` when available, and parses imported SVG as text without injecting the SVG markup.
+
 ## Multi-Monitor Behavior
 
 Use monitor APIs instead of hardcoding display geometry.

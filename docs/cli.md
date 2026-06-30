@@ -28,13 +28,14 @@ These commands help create and iterate on skins from the CLI.
 
 ```powershell
 .\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin scaffold my.skin --template classic --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin scaffold my.rabbits --template rabbits --json
 .\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\my-skin --strict --json
 .\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin dev .\my-skin --entry index.html --watch --json
 ```
 
 Implemented behavior:
 
-- `skin scaffold`: generates valid starter skins from blank, classic, launcher, or dashboard templates.
+- `skin scaffold`: generates valid starter skins from blank, classic, launcher, dashboard, or rabbits templates.
 - `skin validate --strict`: checks missing referenced assets, obvious local JavaScript syntax errors, and warns on private absolute paths or remote assets.
 - `skin dev`: validates, installs, activates, and reloads a skin folder. With `--watch`, it repeats on file changes until Ctrl+C.
 

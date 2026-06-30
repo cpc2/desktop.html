@@ -926,7 +926,7 @@ desktop-html commands:
   desktop-html skin list [--json]
   desktop-html skin validate <folder> [--json]
   desktop-html skin validate <folder> --strict [--json]
-  desktop-html skin scaffold <skin-id> [--template blank|classic|launcher|dashboard] [--out folder] [--force] [--json]
+  desktop-html skin scaffold <skin-id> [--template blank|classic|launcher|dashboard|rabbits] [--out folder] [--force] [--json]
   desktop-html skin dev <folder> [--entry index.html] [--watch] [--no-strict] [--json]
   desktop-html skin install <folder> [--force] [--json]
   desktop-html skin activate <skin-id> [--entry index.html] [--json]
