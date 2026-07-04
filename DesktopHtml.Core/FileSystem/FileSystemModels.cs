@@ -10,4 +10,5 @@ public sealed record DirectoryEntryInfo(
     string FullPath,
     bool IsDirectory,
     long? Size,
-    DateTimeOffset LastWriteTime);
+    DateTimeOffset LastWriteTime,
+    string? SourceDirectory = null);

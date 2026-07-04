@@ -54,6 +54,20 @@ Important validation rules:
 - Entrypoints cannot contain `..`.
 - Every declared entrypoint file must exist.
 
+### Permissions block
+
+The `permissions` block is **declarative, not enforced**: every skin runs with
+full trust regardless of what it declares. Its purpose is honesty — `skin
+validate` and the settings UI surface the declarations so users can see what a
+skin says it uses before installing it.
+
+- `fullTrust`: the skin uses local file/system APIs beyond its own storage.
+- `network`: the skin calls `httpFetch` or loads remote resources.
+- `rawExecution`: the skin runs commands (`run`, `runPowerShell`, terminal sessions, ...).
+
+Declare only what you actually use; a launcher that never shells out should set
+`rawExecution` to `false` so users know that.
+
 ## HTML and JavaScript
 
 The runtime injects `window.desktop` before your scripts run. Bridge calls are async and return Promises.
@@ -114,6 +128,42 @@ await window.desktop.storage.remove("count");
 await window.desktop.storage.clear();
 ```
 
+## Embedded Terminals
+
+Do not hand-roll an ANSI parser. Copy the shared terminal widget from
+`samples/_lib/` (wrapper + vendored xterm.js, all local files) into your skin's
+`vendor/` folder and you get a full ConPTY terminal — prompts, colors, vim/htop,
+paste, resize — in a few lines:
+
+```js
+const term = new TopwebTerminal(containerEl, {
+  command: "wsl.exe",          // or powershell.exe / cmd.exe
+  args: ["--cd", "~"],
+  theme: { background: "rgba(0,0,0,0)" },
+});
+term.onExit(() => term.write("\r\n[exited — press Enter to restart]\r\n"));
+await term.start();
+```
+
+See `samples/_lib/README.md` and the glyph skin for a complete integration.
+
+## Live Desktop Launchers
+
+Launcher-style skins should prefer the live desktop listing API instead of hardcoding every icon. This lets the skin reflect the current user's Desktop plus the Public Desktop shortcuts that Windows shows for every user.
+
+```js
+const { items } = await window.desktop.listDesktopItems();
+
+function launchPlan(item) {
+  if (item.isDirectory) return ["openFolder", item.fullPath];
+  if (item.name.toLowerCase().endsWith(".lnk")) return ["openShortcut", item.fullPath];
+  if (item.name.toLowerCase().endsWith(".url")) return ["openPath", item.fullPath];
+  return ["openFile", item.fullPath];
+}
+```
+
+Static or generated icon lists are still fine for deliberately curated skins, but avoid private absolute paths unless the skin is meant only for that one machine.
+
 ## Optional Hundred Rabbits Themes
 
 Skins may opt into the Hundred Rabbits 9-color SVG theme convention by including a local `rabbits-theme.js` helper. This is skin-side only; the runtime does not enforce or inject global theme behavior.
@@ -121,7 +171,7 @@ Skins may opt into the Hundred Rabbits 9-color SVG theme convention by including
 Scaffold a starter:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin scaffold my.rabbits --template rabbits --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin scaffold my.rabbits --template rabbits --json
 ```
 
 The helper exposes:
@@ -159,15 +209,15 @@ In per-monitor mode, each host WebView can receive its own current monitor. In s
 From the repository root:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\path\to\my-skin --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install .\path\to\my-skin --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin activate example.my-skin --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\path\to\my-skin --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\path\to\my-skin --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin activate example.my-skin --entry index.html --json
 ```
 
 If desktop.html is already running:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin reload --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin reload --json
 ```
 
 ## Agent Checklist

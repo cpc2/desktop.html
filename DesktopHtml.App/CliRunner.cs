@@ -40,6 +40,7 @@ public static class CliRunner
                 ["status", .. var rest] => await WriteStatusAsync(rest, paths, configService),
                 ["skin", "list", .. var rest] => await ListSkinsAsync(rest, paths),
                 ["skin", "validate", var folder, .. var rest] => await ValidateSkinAsync(folder, rest),
+                ["skin", "pack", var folder, .. var rest] => await PackSkinAsync(folder, rest),
                 ["skin", "scaffold", var skinId, .. var rest] => await ScaffoldSkinAsync(skinId, rest),
                 ["skin", "dev", var folder, .. var rest] => await DevSkinAsync(folder, rest, paths, configService),
                 ["skin", "install", var folder, .. var rest] => await InstallSkinAsync(folder, rest, paths),
@@ -315,6 +316,10 @@ public static class CliRunner
         else if (result.IsValid && result.Manifest is not null)
         {
             Console.WriteLine($"Valid skin: {result.Manifest.Id}");
+            var permissions = result.Manifest.Permissions;
+            Console.WriteLine(
+                $"Declared permissions: fullTrust={permissions.FullTrust}, network={permissions.Network}, rawExecution={permissions.RawExecution}");
+            Console.WriteLine("Skins run with full trust regardless of declarations. Only install skins you trust.");
         }
         else
         {
@@ -331,6 +336,80 @@ public static class CliRunner
         }
 
         return result.IsValid ? 0 : 1;
+    }
+
+    private static async Task<int> PackSkinAsync(string folder, string[] args)
+    {
+        var validation = await new SkinValidator().ValidateAsync(folder, args.Contains("--strict"));
+        if (!validation.IsValid || validation.Manifest is null)
+        {
+            Console.WriteLine("Cannot pack an invalid skin:");
+            foreach (var error in validation.Errors)
+            {
+                Console.WriteLine($"- {error}");
+            }
+
+            return 1;
+        }
+
+        var manifest = validation.Manifest;
+        var defaultName = $"{manifest.Id}-{manifest.Version}.zip";
+        var outOption = GetOptionValue(args, "--out");
+        string outputPath;
+        if (string.IsNullOrWhiteSpace(outOption))
+        {
+            outputPath = Path.Combine(Environment.CurrentDirectory, defaultName);
+        }
+        else if (outOption.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            outputPath = Path.GetFullPath(outOption);
+        }
+        else
+        {
+            Directory.CreateDirectory(outOption);
+            outputPath = Path.Combine(Path.GetFullPath(outOption), defaultName);
+        }
+
+        if (File.Exists(outputPath))
+        {
+            if (!args.Contains("--force"))
+            {
+                Console.WriteLine($"Output already exists: {outputPath}. Pass --force to overwrite it.");
+                return 1;
+            }
+
+            File.Delete(outputPath);
+        }
+
+        var parent = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrWhiteSpace(parent))
+        {
+            Directory.CreateDirectory(parent);
+        }
+
+        System.IO.Compression.ZipFile.CreateFromDirectory(
+            validation.SkinDirectory,
+            outputPath,
+            System.IO.Compression.CompressionLevel.Optimal,
+            includeBaseDirectory: false);
+
+        if (args.Contains("--json"))
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                packed = true,
+                id = manifest.Id,
+                version = manifest.Version,
+                outputPath
+            }, JsonOptions));
+        }
+        else
+        {
+            Console.WriteLine($"Packed skin: {manifest.Id} {manifest.Version}");
+            Console.WriteLine(outputPath);
+        }
+
+        return 0;
     }
 
     private static async Task<int> ScaffoldSkinAsync(string skinId, string[] args)
@@ -928,7 +1007,8 @@ desktop-html commands:
   desktop-html skin validate <folder> --strict [--json]
   desktop-html skin scaffold <skin-id> [--template blank|classic|launcher|dashboard|rabbits] [--out folder] [--force] [--json]
   desktop-html skin dev <folder> [--entry index.html] [--watch] [--no-strict] [--json]
-  desktop-html skin install <folder> [--force] [--json]
+  desktop-html skin pack <folder> [--out file.zip|folder] [--force] [--strict] [--json]
+  desktop-html skin install <folder|package.zip> [--force] [--json]
   desktop-html skin activate <skin-id> [--entry index.html] [--json]
   desktop-html skin reload [--json]
   desktop-html monitor list [--json]

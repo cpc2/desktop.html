@@ -38,40 +38,41 @@ dotnet test .\desktop-html.sln
 - [Security notice](SECURITY.md)
 - [Sample skin walkthrough](docs/sample-skin-walkthrough.md)
 - [Agent skin prompt](docs/agent-skin-prompt.md)
+- [Agent roadmap / backlog](docs/ROADMAP.md)
 
 ## Run
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe
 ```
 
 The prototype intentionally uses a console-capable executable so CLI output works:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe status --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor list --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor assign "\\.\DISPLAY1" desktop-html.sample.launcher --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor clear "\\.\DISPLAY1" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor reload "\\.\DISPLAY1" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor span desktop-html.sample.launcher --monitors "\\.\DISPLAY1,\\.\DISPLAY2" --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe monitor mode single-monitor --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe placement diagnostics --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe placement reapply --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe logs --lines 50 --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe startup status --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin list --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate "$env:APPDATA\desktop-html\skins\desktop-html.sample.launcher" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\samples\phase11-control-room --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install .\samples\phase11-control-room --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe status --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor list --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor assign "\\.\DISPLAY1" desktop-html.sample.launcher --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor clear "\\.\DISPLAY1" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor reload "\\.\DISPLAY1" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor span desktop-html.sample.launcher --monitors "\\.\DISPLAY1,\\.\DISPLAY2" --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor mode single-monitor --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement diagnostics --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement reapply --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe logs --lines 50 --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe startup status --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin list --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate "$env:APPDATA\desktop-html\skins\desktop-html.sample.launcher" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\phase11-control-room --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\phase11-control-room --force --json
 .\samples\desktop-nexus\tools\generate-desktop-nexus.ps1
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\samples\desktop-nexus --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install .\samples\desktop-nexus --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install C:\path\to\skin --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin activate desktop-html.sample.launcher --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin reload --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe open-settings --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe config get --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe config set app.safeMode false --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\desktop-nexus --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\desktop-nexus --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install C:\path\to\skin --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin activate desktop-html.sample.launcher --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin reload --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe open-settings --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe config get --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe config set app.safeMode false --json
 ```
 
 ## Desktop Nexus Input Testing
@@ -81,7 +82,7 @@ The prototype intentionally uses a console-capable executable so CLI output work
 For input reliability checks:
 
 1. Start `desktop-html.exe` and activate `Desktop Nexus`.
-2. Run `.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe placement diagnostics --json` and confirm `hostWindows` is not empty.
+2. Run `.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement diagnostics --json` and confirm `hostWindows` is not empty.
 3. Click and double-click a few tiles while watching the overlay counters.
 4. Compare behavior with normal Windows desktop icons visible.
 5. Hide Windows desktop icons with Desktop → View → Show desktop icons, then repeat the same clicks.

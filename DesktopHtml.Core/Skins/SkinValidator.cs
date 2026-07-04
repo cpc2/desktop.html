@@ -146,38 +146,46 @@ public sealed class SkinValidator
                 warnings.Add($"Private absolute path found in {relativeFile}.");
             }
 
-            foreach (Match match in AssetReferencePattern.Matches(content))
+            // Only markup and stylesheets have statically resolvable asset
+            // references. JavaScript builds paths dynamically (template
+            // literals, computed strings, minified tokens), so scanning it for
+            // src=/url() produces false positives — check .js for private
+            // paths and syntax below, but not for missing assets.
+            if (extension is ".html" or ".htm" or ".css")
             {
-                var reference = match.Groups["path"].Value.Trim();
-                if (string.IsNullOrWhiteSpace(reference) || ShouldIgnoreAssetReference(reference))
+                foreach (Match match in AssetReferencePattern.Matches(content))
                 {
-                    continue;
-                }
+                    var reference = match.Groups["path"].Value.Trim();
+                    if (string.IsNullOrWhiteSpace(reference) || ShouldIgnoreAssetReference(reference))
+                    {
+                        continue;
+                    }
 
-                if (IsRemoteReference(reference))
-                {
-                    warnings.Add($"Remote asset reference in {relativeFile}: {reference}");
-                    continue;
-                }
+                    if (IsRemoteReference(reference))
+                    {
+                        warnings.Add($"Remote asset reference in {relativeFile}: {reference}");
+                        continue;
+                    }
 
-                if (Path.IsPathRooted(reference) || reference.Contains(':'))
-                {
-                    warnings.Add($"Absolute asset reference in {relativeFile}: {reference}");
-                    continue;
-                }
+                    if (Path.IsPathRooted(reference) || reference.Contains(':'))
+                    {
+                        warnings.Add($"Absolute asset reference in {relativeFile}: {reference}");
+                        continue;
+                    }
 
-                var referencePath = reference.Split('#')[0].Split('?')[0];
-                if (!IsSafeRelativePath(referencePath))
-                {
-                    errors.Add($"Referenced asset path escapes the skin folder in {relativeFile}: {reference}");
-                    continue;
-                }
+                    var referencePath = reference.Split('#')[0].Split('?')[0];
+                    if (!IsSafeRelativePath(referencePath))
+                    {
+                        errors.Add($"Referenced asset path escapes the skin folder in {relativeFile}: {reference}");
+                        continue;
+                    }
 
-                var resolved = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, referencePath));
-                if (!resolved.StartsWith(skinDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-                    || !File.Exists(resolved))
-                {
-                    errors.Add($"Referenced asset does not exist in {relativeFile}: {reference}");
+                    var resolved = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, referencePath));
+                    if (!resolved.StartsWith(skinDirectory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                        || !File.Exists(resolved))
+                    {
+                        errors.Add($"Referenced asset does not exist in {relativeFile}: {reference}");
+                    }
                 }
             }
 

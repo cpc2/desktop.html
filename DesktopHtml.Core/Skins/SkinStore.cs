@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using DesktopHtml.Core.Backups;
 using DesktopHtml.Core.Configuration;
 
@@ -18,12 +19,52 @@ public sealed class SkinStore
 
     public string GetSkinDirectory(string skinId) => Path.Combine(_paths.SkinsDirectory, skinId);
 
+    /// <summary>Finds the skin folder inside an extracted package: either the
+    /// root itself or a single wrapping directory containing manifest.json.</summary>
+    private static string LocateSkinRoot(string extractRoot)
+    {
+        if (File.Exists(Path.Combine(extractRoot, "manifest.json")))
+        {
+            return extractRoot;
+        }
+
+        var directories = Directory.GetDirectories(extractRoot);
+        if (directories.Length == 1 && File.Exists(Path.Combine(directories[0], "manifest.json")))
+        {
+            return directories[0];
+        }
+
+        throw new InvalidOperationException("Skin package does not contain a manifest.json at its root.");
+    }
+
     public async Task<SkinManifest> InstallAsync(
         string sourceDirectory,
         bool overwrite,
         CancellationToken cancellationToken = default)
     {
         _paths.EnsureCreated();
+
+        // A .zip package installs by extracting to a temp folder first.
+        if (File.Exists(sourceDirectory) &&
+            sourceDirectory.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            var extractRoot = Path.Combine(Path.GetTempPath(), "desktop-html-install-" + Guid.NewGuid().ToString("n"));
+            try
+            {
+                ZipFile.ExtractToDirectory(sourceDirectory, extractRoot);
+                return await InstallAsync(LocateSkinRoot(extractRoot), overwrite, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                try
+                {
+                    Directory.Delete(extractRoot, recursive: true);
+                }
+                catch
+                {
+                }
+            }
+        }
 
         var validation = await _validator.ValidateAsync(sourceDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
         if (!validation.IsValid || validation.Manifest is null)

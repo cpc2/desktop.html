@@ -11,6 +11,7 @@ public partial class SettingsWindow : Window
     private readonly AppPaths _paths;
     private readonly DesktopHtmlConfig _config;
     private readonly WpfDesktopHostActions _hostActions;
+    private DesktopBridgeDispatcher? _bridgeDispatcher;
 
     public SettingsWindow(
         AppPaths paths,
@@ -33,10 +34,22 @@ public partial class SettingsWindow : Window
             await SettingsWebView.EnsureCoreWebView2Async(environment);
 
             var dispatcher = new DesktopBridgeDispatcher(_paths, _config, skin, _hostActions);
+            _bridgeDispatcher = dispatcher;
+            var messenger = new WebViewMessenger(SettingsWebView.CoreWebView2);
+            messenger.NavigationStarting += dispatcher.ResetPageState;
+
+            dispatcher.OnPostMessage += (msg) =>
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    messenger.Post(msg);
+                });
+            };
+
             SettingsWebView.CoreWebView2.WebMessageReceived += async (_, args) =>
             {
                 var response = await dispatcher.DispatchAsync(args.WebMessageAsJson);
-                SettingsWebView.CoreWebView2.PostWebMessageAsJson(response);
+                messenger.Post(response);
             };
 
             await SettingsWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(DesktopBridgeBootstrap.Script);
@@ -46,6 +59,13 @@ public partial class SettingsWindow : Window
         {
             SettingsWebView.NavigateToString(ErrorPage.Create("desktop.html settings failed to load", ex));
         }
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _bridgeDispatcher?.Dispose();
+        _bridgeDispatcher = null;
+        base.OnClosed(e);
     }
 
     private async Task<ResolvedSkin> ResolveSettingsBridgeSkinAsync(SkinStore skinStore)

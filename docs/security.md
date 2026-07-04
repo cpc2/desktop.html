@@ -32,6 +32,6 @@ Safe mode disables active skin windows and opens settings only. It is useful if 
 CLI:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe safe-mode on
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe safe-mode off
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe safe-mode on
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe safe-mode off
 ```

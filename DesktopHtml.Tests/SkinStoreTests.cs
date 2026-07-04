@@ -136,6 +136,36 @@ public sealed class SkinStoreTests
         Assert.Throws<InvalidOperationException>(() => store.SetActiveMode(config, "banana"));
     }
 
+    [Fact]
+    public async Task InstallAsync_InstallsFromZipPackage()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.zipped", "Zipped Skin");
+        var zipPath = Path.Combine(temp.Path, "example.zipped-0.1.0.zip");
+        System.IO.Compression.ZipFile.CreateFromDirectory(source, zipPath, System.IO.Compression.CompressionLevel.Fastest, includeBaseDirectory: false);
+
+        var manifest = await new SkinStore(paths).InstallAsync(zipPath, overwrite: false);
+
+        Assert.Equal("example.zipped", manifest.Id);
+        Assert.True(File.Exists(Path.Combine(paths.SkinsDirectory, "example.zipped", "index.html")));
+    }
+
+    [Fact]
+    public async Task InstallAsync_InstallsFromZipWithWrappingDirectory()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.wrapped", "Wrapped Skin");
+        var zipPath = Path.Combine(temp.Path, "wrapped.zip");
+        System.IO.Compression.ZipFile.CreateFromDirectory(source, zipPath, System.IO.Compression.CompressionLevel.Fastest, includeBaseDirectory: true);
+
+        var manifest = await new SkinStore(paths).InstallAsync(zipPath, overwrite: false);
+
+        Assert.Equal("example.wrapped", manifest.Id);
+        Assert.True(File.Exists(Path.Combine(paths.SkinsDirectory, "example.wrapped", "manifest.json")));
+    }
+
     private static string CreateSkin(string root, string id, string name)
     {
         var skinRoot = Path.Combine(root, "source-skin");

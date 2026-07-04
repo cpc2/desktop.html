@@ -370,7 +370,25 @@ public sealed class BackupService
             Directory.Delete(targetPath, recursive: true);
         }
 
-        Directory.Move(tempDirectory, targetPath);
+        // Directory.Delete returns while Windows may still be tearing the
+        // directory down (open antivirus/indexer handles), so an immediate
+        // rename onto the same path can fail transiently. Retry briefly.
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                Directory.Move(tempDirectory, targetPath);
+                return;
+            }
+            catch (IOException) when (attempt < 10)
+            {
+                Thread.Sleep(25 * (attempt + 1));
+            }
+            catch (UnauthorizedAccessException) when (attempt < 10)
+            {
+                Thread.Sleep(25 * (attempt + 1));
+            }
+        }
     }
 
     private static void CopyDirectory(string sourceDirectory, string targetDirectory)

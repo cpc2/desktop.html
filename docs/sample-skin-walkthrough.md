@@ -71,19 +71,19 @@ const mode = await window.desktop.storage.get("mode");
 ## 4. Validate and Install
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\samples\my-skin --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install .\samples\my-skin --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin activate example.my-skin --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\my-skin --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\my-skin --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin activate example.my-skin --entry index.html --json
 ```
 
 ## 5. Reload While Running
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin reload --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin reload --json
 ```
 
 If this fails with a no-host error, start desktop.html first:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe
 ```

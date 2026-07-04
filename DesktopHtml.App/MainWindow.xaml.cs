@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly WpfDesktopHostActions _hostActions;
     private readonly DesktopPlacementService _placementService;
     private MonitorSnapshot? _monitor;
+    private DesktopBridgeDispatcher? _bridgeDispatcher;
 
     public MainWindow(
         AppPaths paths,
@@ -60,11 +61,25 @@ public partial class MainWindow : Window
 
             await DesktopWebView.EnsureCoreWebView2Async(environment);
             var dispatcher = new DesktopBridgeDispatcher(_paths, _config, _skin, _hostActions, () => _monitor);
+            _bridgeDispatcher = dispatcher;
+            var messenger = new WebViewMessenger(DesktopWebView.CoreWebView2);
+
+            // A reload restarts the page; terminal sessions, watchers, and
+            // stats subscriptions belong to the old page and must not leak.
+            messenger.NavigationStarting += dispatcher.ResetPageState;
+
+            dispatcher.OnPostMessage += (msg) =>
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    messenger.Post(msg);
+                });
+            };
 
             DesktopWebView.CoreWebView2.WebMessageReceived += async (_, args) =>
             {
                 var response = await dispatcher.DispatchAsync(args.WebMessageAsJson);
-                DesktopWebView.CoreWebView2.PostWebMessageAsJson(response);
+                messenger.Post(response);
             };
 
             await DesktopWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(DesktopBridgeBootstrap.Script);
@@ -108,6 +123,8 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _bridgeDispatcher?.Dispose();
+        _bridgeDispatcher = null;
         _hostActions.UnregisterWindow(this);
         base.OnClosed(e);
     }

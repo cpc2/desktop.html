@@ -9,7 +9,7 @@ desktop.html stores runtime config at:
 The CLI is the preferred way for agents to inspect and patch config.
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe config get --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe config get --json
 ```
 
 ## Shape

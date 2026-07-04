@@ -45,6 +45,15 @@ public sealed class TrayService : IDisposable
         _notifyIcon.DoubleClick += async (_, _) => await RunMenuActionAsync("openSettings", _hostActions.OpenSettingsAsync);
     }
 
+    /// <summary>Shows a balloon notification from the tray icon (desktop.notify).</summary>
+    public void ShowNotification(string title, string message)
+    {
+        _notifyIcon.BalloonTipTitle = string.IsNullOrWhiteSpace(title) ? "desktop.html" : title;
+        _notifyIcon.BalloonTipText = string.IsNullOrWhiteSpace(message) ? " " : message;
+        _notifyIcon.BalloonTipIcon = Forms.ToolTipIcon.None;
+        _notifyIcon.ShowBalloonTip(4000);
+    }
+
     private static string BuildTooltip(DesktopHtmlConfig config)
     {
         var skin = string.IsNullOrWhiteSpace(config.Skins.ActiveSkinId)

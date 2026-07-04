@@ -16,11 +16,12 @@ Requirements:
 - Use plain HTML/CSS/JavaScript, no framework unless explicitly requested.
 - The manifest id must be unique and stable.
 - Do not hardcode private absolute paths unless I explicitly request a personal local skin.
+- For launcher-style skins, prefer `window.desktop.listDesktopItems()` over a hardcoded icon list so the UI reflects the live user and Public Desktop contents.
 - Use window.desktop only after clear user actions for launching or raw execution.
 - Make the UI visually polished, responsive, and usable as a desktop surface.
 - Validate with:
-  .\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin validate .\samples\<skin-name> --json
+  .\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\<skin-name> --json
 - Install with:
-  .\DesktopHtml.App\bin\Debug\net8.0-windows\desktop-html.exe skin install .\samples\<skin-name> --force --json
+  .\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\<skin-name> --force --json
 - Do not claim manual visual acceptance unless it was actually checked.
 ```

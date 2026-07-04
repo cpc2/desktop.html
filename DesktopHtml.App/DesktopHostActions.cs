@@ -18,6 +18,7 @@ public interface IDesktopHostActions
     Task<PlacementDiagnostics> GetPlacementDiagnosticsAsync();
     Task<PlacementReapplyResult> ReapplyPlacementAsync(string reason);
     Task ExitAsync();
+    void ShowNotification(string title, string message);
 }
 
 public sealed class WpfDesktopHostActions : IDesktopHostActions
@@ -29,6 +30,9 @@ public sealed class WpfDesktopHostActions : IDesktopHostActions
     private readonly Action? _refreshHostWindows;
     private readonly List<MainWindow> _windows = new();
     private SettingsWindow? _settingsWindow;
+
+    /// <summary>Wired to the tray icon after startup; used by desktop.notify.</summary>
+    public Action<string, string>? NotificationHandler { get; set; }
 
     public WpfDesktopHostActions(
         AppPaths paths,
@@ -154,6 +158,13 @@ public sealed class WpfDesktopHostActions : IDesktopHostActions
         {
             System.Windows.Application.Current.Shutdown(0);
         }).Task;
+    }
+
+    public void ShowNotification(string title, string message)
+    {
+        var handler = NotificationHandler
+            ?? throw new InvalidOperationException("Notifications are unavailable: no tray icon is active.");
+        handler(title, message);
     }
 
     private Window? GetOwner() => _windows.FirstOrDefault(window => window.IsLoaded) ?? _windows.FirstOrDefault();

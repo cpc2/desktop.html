@@ -19,4 +19,6 @@ public sealed record RuntimeInfo(
     string ConfigPath,
     string ActiveSkinId,
     string ActiveSkinPath,
-    string PlacementMode);
+    string PlacementMode,
+    string DesktopPath,
+    string PublicDesktopPath);

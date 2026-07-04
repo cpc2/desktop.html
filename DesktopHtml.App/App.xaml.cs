@@ -68,7 +68,11 @@ public partial class App : System.Windows.Application
         _commandServer.Start();
         _ = _logService.InfoAsync("app", "Runtime command server start requested.");
         _trayService = new TrayService(hostActions, config, _logService);
+        hostActions.NotificationHandler = _trayService.ShowNotification;
         _ = _logService.InfoAsync("app", "Tray service created.");
+        DesktopVisibilityService.Initialize();
+        HotkeyService.Initialize();
+        _ = _logService.InfoAsync("app", "Desktop visibility and hotkey services initialized.");
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         _ = _logService.InfoAsync("app", "Display settings handler registered.");
 

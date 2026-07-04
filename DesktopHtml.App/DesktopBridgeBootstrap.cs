@@ -10,6 +10,7 @@ public static class DesktopBridgeBootstrap
 
   let nextId = 1;
   const pending = new Map();
+  const listeners = new Set();
 
   function rejectFromError(error) {
     const nativeError = new Error(error?.message || "Native bridge call failed.");
@@ -20,6 +21,13 @@ public static class DesktopBridgeBootstrap
 
   chrome.webview.addEventListener("message", event => {
     const message = event.data;
+    console.log("[bridge] Received WebView message:", message);
+    if (message && message.type) {
+      listeners.forEach(cb => {
+        try { cb(message); } catch (e) { console.error(e); }
+      });
+      return;
+    }
     if (!message?.id || !pending.has(message.id)) {
       return;
     }
@@ -91,10 +99,16 @@ public static class DesktopBridgeBootstrap
     runBatch: (scriptOrFile, options = {}) => call("runBatch", { ...options, scriptOrFile }),
     exists: path => call("exists", { path }),
     readText: path => call("readText", { path }),
+    getIcon: (path, sizeOrSmall = "large") => {
+      const size = typeof sizeOrSmall === "string" ? sizeOrSmall : (sizeOrSmall ? "small" : "large");
+      return call("getIcon", { path, size });
+    },
     writeText: (path, content) => call("writeText", { path, content }),
+    writeFileBase64: (path, dataBase64, options = {}) => call("writeFileBase64", { ...options, path, dataBase64 }),
     readJson: path => call("readJson", { path }),
     writeJson: (path, value) => call("writeJson", { path, value }),
     listDirectory: path => call("listDirectory", { path }),
+    listDesktopItems: () => call("listDesktopItems"),
     createDirectory: path => call("createDirectory", { path }),
     deletePath: (path, options = {}) => call("deletePath", { path, options }),
     movePath: (source, destination) => call("movePath", { source, destination }),
@@ -108,10 +122,33 @@ public static class DesktopBridgeBootstrap
     },
     clipboard: {
       readText: () => call("clipboard.readText"),
-      writeText: text => call("clipboard.writeText", { text })
+      writeText: text => call("clipboard.writeText", { text }),
+      saveToDirectory: directory => call("clipboard.saveToDirectory", { directory })
     },
     getLogs: (options = {}) => call("getLogs", options),
-    getLastError: () => call("getLastError")
+    getLastError: () => call("getLastError"),
+    onEvent: callback => {
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
+    httpFetch: (url, options = {}) => call("httpFetch", { url, ...options }),
+    startTerminalSession: options => call("terminal.start", options || {}),
+    writeTerminalInput: (sessionId, text) => call("terminal.write", { sessionId, text }),
+    resizeTerminal: (sessionId, cols, rows) => call("terminal.resize", { sessionId, cols, rows }),
+    watch: (path, options = {}) => call("watch", { path, ...options }),
+    unwatch: watchId => call("unwatch", { watchId }),
+    getSystemStats: () => call("getSystemStats"),
+    subscribeSystemStats: (intervalMs = 2000) => call("subscribeSystemStats", { intervalMs }),
+    unsubscribeSystemStats: () => call("unsubscribeSystemStats"),
+    notify: (title, message = "") => call("notify", { title, message }),
+    media: {
+      getNowPlaying: (options = {}) => call("media.getNowPlaying", options),
+      control: action => call("media.control", { action }),
+      subscribe: () => call("media.subscribe"),
+      unsubscribe: () => call("media.unsubscribe")
+    },
+    registerHotkey: (key, modifiers = []) => call("registerHotkey", { key, modifiers }),
+    unregisterHotkey: hotkeyId => call("unregisterHotkey", { hotkeyId })
   };
 })();
 """;
