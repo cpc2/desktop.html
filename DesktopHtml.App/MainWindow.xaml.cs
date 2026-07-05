@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly DesktopPlacementService _placementService;
     private MonitorSnapshot? _monitor;
     private DesktopBridgeDispatcher? _bridgeDispatcher;
+    private bool _closed;
 
     public MainWindow(
         AppPaths paths,
@@ -72,14 +73,20 @@ public partial class MainWindow : Window
             {
                 Dispatcher.BeginInvoke(() =>
                 {
-                    messenger.Post(msg);
+                    PostToPage(messenger, msg);
                 });
             };
 
             DesktopWebView.CoreWebView2.WebMessageReceived += async (_, args) =>
             {
-                var response = await dispatcher.DispatchAsync(args.WebMessageAsJson);
-                messenger.Post(response);
+                var messageJson = args.WebMessageAsJson;
+                if (messenger.TryHandleHello(messageJson))
+                {
+                    return;
+                }
+
+                var response = await dispatcher.DispatchAsync(messageJson);
+                PostToPage(messenger, response);
             };
 
             await DesktopWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(DesktopBridgeBootstrap.Script);
@@ -89,6 +96,30 @@ public partial class MainWindow : Window
         {
             Console.Error.WriteLine($"desktop.html WebView2 initialization failed: {ex}");
             System.Windows.MessageBox.Show($"desktop.html WebView2 initialization failed:\n\n{ex.Message}\n\nStack Trace:\n{ex.StackTrace}", "desktop.html Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// Posts a message to the page unless the window is already closed.
+    /// Background event sources (stats timer, terminal output, media) can
+    /// queue posts on the UI dispatcher that run after the WebView2 control
+    /// is disposed during window teardown (e.g. skin activation replaces the
+    /// host windows); those must not crash the process.
+    /// </summary>
+    private void PostToPage(WebViewMessenger messenger, string messageJson)
+    {
+        if (_closed)
+        {
+            return;
+        }
+
+        try
+        {
+            messenger.Post(messageJson);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            // The WebView2 was disposed between the closed check and the post.
         }
     }
 
@@ -123,6 +154,7 @@ public partial class MainWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _closed = true;
         _bridgeDispatcher?.Dispose();
         _bridgeDispatcher = null;
         _hostActions.UnregisterWindow(this);

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
 using DesktopHtml.Core;
@@ -12,6 +13,7 @@ public partial class SettingsWindow : Window
     private readonly DesktopHtmlConfig _config;
     private readonly WpfDesktopHostActions _hostActions;
     private DesktopBridgeDispatcher? _bridgeDispatcher;
+    private bool _closed;
 
     public SettingsWindow(
         AppPaths paths,
@@ -42,18 +44,32 @@ public partial class SettingsWindow : Window
             {
                 Dispatcher.BeginInvoke(() =>
                 {
-                    messenger.Post(msg);
+                    PostToPage(messenger, msg);
                 });
             };
 
             SettingsWebView.CoreWebView2.WebMessageReceived += async (_, args) =>
             {
-                var response = await dispatcher.DispatchAsync(args.WebMessageAsJson);
-                messenger.Post(response);
+                var messageJson = args.WebMessageAsJson;
+                if (messenger.TryHandleHello(messageJson))
+                {
+                    return;
+                }
+
+                var response = await dispatcher.DispatchAsync(messageJson);
+                PostToPage(messenger, response);
             };
 
             await SettingsWebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(DesktopBridgeBootstrap.Script);
-            SettingsWebView.NavigateToString(SettingsPage.Html);
+
+            // Serve settings from a real file. NavigateToString loads the page
+            // as a data: URI with an opaque origin, and WebView2 drops the
+            // page's early chrome.webview.postMessage calls for such pages —
+            // the initial data load never reaches the host. file:// pages
+            // (like skins) deliver web messages reliably.
+            var settingsFile = Path.Combine(_paths.Root, "settings.html");
+            await File.WriteAllTextAsync(settingsFile, SettingsPage.Html).ConfigureAwait(true);
+            SettingsWebView.Source = new Uri(settingsFile);
         }
         catch (Exception ex)
         {
@@ -63,9 +79,31 @@ public partial class SettingsWindow : Window
 
     protected override void OnClosed(EventArgs e)
     {
+        _closed = true;
         _bridgeDispatcher?.Dispose();
         _bridgeDispatcher = null;
         base.OnClosed(e);
+    }
+
+    /// <summary>
+    /// Posts a message to the page unless the window is already closed; see
+    /// <see cref="MainWindow"/> for the teardown race this guards against.
+    /// </summary>
+    private void PostToPage(WebViewMessenger messenger, string messageJson)
+    {
+        if (_closed)
+        {
+            return;
+        }
+
+        try
+        {
+            messenger.Post(messageJson);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            // The WebView2 was disposed between the closed check and the post.
+        }
     }
 
     private async Task<ResolvedSkin> ResolveSettingsBridgeSkinAsync(SkinStore skinStore)

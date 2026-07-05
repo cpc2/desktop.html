@@ -12,6 +12,44 @@ public static class DesktopBridgeBootstrap
   const pending = new Map();
   const listeners = new Set();
 
+  // Messages posted while the navigation is still settling are silently
+  // dropped by WebView2 in both directions, which loses bridge calls made
+  // while the document is parsing (e.g. an inline script's initial data
+  // load). Queue outbound messages and ping the host with "bridgeHello"
+  // until it acknowledges with a "bridgeReady" event; only then flush.
+  let bridgeReady = false;
+  const outbox = [];
+
+  function send(payload) {
+    if (bridgeReady) {
+      chrome.webview.postMessage(payload);
+    } else {
+      outbox.push(payload);
+    }
+  }
+
+  function markReady() {
+    if (bridgeReady) {
+      return;
+    }
+    bridgeReady = true;
+    clearInterval(helloTimer);
+    while (outbox.length) {
+      chrome.webview.postMessage(outbox.shift());
+    }
+  }
+
+  const helloStarted = Date.now();
+  const helloTimer = setInterval(() => {
+    if (Date.now() - helloStarted > 15000) {
+      // No ack — assume an old host without the handshake and post directly.
+      markReady();
+      return;
+    }
+    chrome.webview.postMessage({ bridgeHello: true });
+  }, 100);
+  chrome.webview.postMessage({ bridgeHello: true });
+
   function rejectFromError(error) {
     const nativeError = new Error(error?.message || "Native bridge call failed.");
     nativeError.code = error?.code || "BRIDGE_ERROR";
@@ -21,7 +59,10 @@ public static class DesktopBridgeBootstrap
 
   chrome.webview.addEventListener("message", event => {
     const message = event.data;
-    console.log("[bridge] Received WebView message:", message);
+    if (message && message.type === "bridgeReady") {
+      markReady();
+      return;
+    }
     if (message && message.type) {
       listeners.forEach(cb => {
         try { cb(message); } catch (e) { console.error(e); }
@@ -44,7 +85,7 @@ public static class DesktopBridgeBootstrap
 
   function call(method, params = {}) {
     const id = `call-${Date.now()}-${nextId++}`;
-    chrome.webview.postMessage({ id, method, params });
+    send({ id, method, params });
 
     return new Promise((resolve, reject) => {
       pending.set(id, { resolve, reject });
