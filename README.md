@@ -17,9 +17,13 @@ This repository currently contains the first prototype slice:
 - CLI commands for status, placement diagnostics/reapply, monitor listing, monitor assignment, skin listing, skin validation, skin install, skin activation, version, and safe mode toggling.
 - Tray menu controls for settings, skin reload, safe mode, logs, and exit.
 - Internal HTML settings window for status, monitors, installed skins, skin install/activation, monitor assignment, spanning mode, startup/pause toggles, recent logs, reload, safe mode, and log access.
-- Repo-local test skin at `samples/phase11-control-room`, installable through settings or CLI.
-- Repo-local generated launcher skin at `samples/desktop-nexus`, built from the current Windows Desktop with extracted shell icons.
 - Current-user Windows startup registration through `desktop-html startup on|off`.
+
+## Install
+
+Download the latest `DesktopHtml-win-Setup.exe` from the [releases page](https://github.com/cpc2/desktop.html/releases) and run it. The installer adds a Start Menu entry, and the app keeps itself up to date automatically by checking GitHub releases on startup (the .NET 8 Desktop Runtime is installed automatically if missing).
+
+Releases are cut by pushing a version tag (for example `v0.2.0`); a GitHub Actions workflow builds, packages with [Velopack](https://velopack.io), and publishes the release.
 
 ## Build
 
@@ -38,54 +42,37 @@ dotnet test .\desktop-html.sln
 - [Security notice](SECURITY.md)
 - [Sample skin walkthrough](docs/sample-skin-walkthrough.md)
 - [Agent skin prompt](docs/agent-skin-prompt.md)
-- [Agent roadmap / backlog](docs/ROADMAP.md)
 
 ## Run
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe
 ```
 
 The prototype intentionally uses a console-capable executable so CLI output works:
 
 ```powershell
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe status --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor list --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor assign "\\.\DISPLAY1" desktop-html.sample.launcher --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor clear "\\.\DISPLAY1" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor reload "\\.\DISPLAY1" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor span desktop-html.sample.launcher --monitors "\\.\DISPLAY1,\\.\DISPLAY2" --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe monitor mode single-monitor --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement diagnostics --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement reapply --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe logs --lines 50 --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe startup status --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin list --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate "$env:APPDATA\desktop-html\skins\desktop-html.sample.launcher" --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\phase11-control-room --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\phase11-control-room --force --json
-.\samples\desktop-nexus\tools\generate-desktop-nexus.ps1
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin validate .\samples\desktop-nexus --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install .\samples\desktop-nexus --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin install C:\path\to\skin --force --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin activate desktop-html.sample.launcher --entry index.html --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe skin reload --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe open-settings --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe config get --json
-.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe config set app.safeMode false --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe status --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor list --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor assign "\\.\DISPLAY1" desktop-html.sample.launcher --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor clear "\\.\DISPLAY1" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor reload "\\.\DISPLAY1" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor span desktop-html.sample.launcher --monitors "\\.\DISPLAY1,\\.\DISPLAY2" --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe monitor mode single-monitor --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe placement diagnostics --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe placement reapply --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe logs --lines 50 --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe startup status --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe skin list --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe skin validate "$env:APPDATA\desktop-html\skins\desktop-html.sample.launcher" --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe skin install C:\path\to\skin --force --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe skin activate desktop-html.sample.launcher --entry index.html --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe skin reload --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe open-settings --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe config get --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe config set app.safeMode false --json
+.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\desktop-html.exe update check --json
 ```
-
-## Desktop Nexus Input Testing
-
-`Desktop Nexus` includes a collapsible diagnostics overlay in the lower-left corner. Use **Diagnostics** to expand it and **Toggle launch** to switch between double-click and single-click launch modes.
-
-For input reliability checks:
-
-1. Start `desktop-html.exe` and activate `Desktop Nexus`.
-2. Run `.\DesktopHtml.App\bin\Debug\net8.0-windows10.0.19041.0\desktop-html.exe placement diagnostics --json` and confirm `hostWindows` is not empty.
-3. Click and double-click a few tiles while watching the overlay counters.
-4. Compare behavior with normal Windows desktop icons visible.
-5. Hide Windows desktop icons with Desktop → View → Show desktop icons, then repeat the same clicks.
 
 ## Trust Model
 
