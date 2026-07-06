@@ -4,6 +4,7 @@ using DesktopHtml.Core;
 using DesktopHtml.Core.Configuration;
 using DesktopHtml.Core.Logging;
 using DesktopHtml.Core.Skins;
+using Velopack;
 
 namespace DesktopHtml.App;
 
@@ -12,6 +13,10 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Must run first: handles Velopack install/update/uninstall hooks
+        // (Start Menu shortcuts, version migration) and exits early during them.
+        VelopackApp.Build().Run();
+
         if (args.Length > 0)
         {
             // Built as WinExe so no console window opens at startup; CLI mode

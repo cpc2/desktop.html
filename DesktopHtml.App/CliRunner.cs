@@ -73,6 +73,7 @@ public static class CliRunner
                 ["backup", "prune", .. var rest] => await PruneBackupsAsync(rest, paths),
                 ["safe-mode", "on", .. var rest] => await SetSafeModeAsync(true, rest, paths, configService),
                 ["safe-mode", "off", .. var rest] => await SetSafeModeAsync(false, rest, paths, configService),
+                ["update", "check", .. var rest] => await CheckForUpdatesAsync(rest),
                 ["help"] or ["--help"] or ["-h"] => WriteHelp(),
                 _ => WriteError($"Unknown command: {string.Join(' ', args)}", 2)
             };
@@ -777,6 +778,50 @@ public static class CliRunner
         return 0;
     }
 
+    private static async Task<int> CheckForUpdatesAsync(string[] args)
+    {
+        var updater = new UpdateService();
+        if (!updater.IsInstalled)
+        {
+            if (args.Contains("--json"))
+            {
+                Console.WriteLine(JsonSerializer.Serialize(new
+                {
+                    installed = false,
+                    currentVersion = AppVersion.Current,
+                    updateAvailable = false
+                }, JsonOptions));
+            }
+            else
+            {
+                Console.WriteLine("Not running from an installed build; auto-update is unavailable.");
+            }
+
+            return 0;
+        }
+
+        var update = await updater.CheckForUpdatesAsync();
+        var availableVersion = update?.TargetFullRelease.Version.ToString();
+        if (args.Contains("--json"))
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new
+            {
+                installed = true,
+                currentVersion = AppVersion.Current,
+                updateAvailable = update is not null,
+                availableVersion
+            }, JsonOptions));
+        }
+        else
+        {
+            Console.WriteLine(update is null
+                ? $"Up to date ({AppVersion.Current})."
+                : $"Update available: {AppVersion.Current} -> {availableVersion}. It installs automatically the next time the app starts.");
+        }
+
+        return 0;
+    }
+
     private static async Task<int> SetStartupAsync(
         bool enabled,
         string[] args,
@@ -1033,6 +1078,7 @@ desktop-html commands:
   desktop-html backup restore <backup-id> [--json]
   desktop-html backup prune --keep <count> [--json]
   desktop-html safe-mode on|off [--json]
+  desktop-html update check [--json]
 """);
         return 0;
     }

@@ -95,6 +95,47 @@ public partial class App : System.Windows.Application
         MainWindow = _windows[0];
         StartPlacementRecoveryMonitor();
         StartDesktopRevealMonitor();
+        _ = Task.Run(CheckForAppUpdatesAsync);
+    }
+
+    private async Task CheckForAppUpdatesAsync()
+    {
+        try
+        {
+            var updater = new UpdateService();
+            if (!updater.IsInstalled)
+            {
+                await (_logService?.InfoAsync("update", "Not an installed build; skipping update check.") ?? Task.CompletedTask);
+                return;
+            }
+
+            var update = await updater.CheckForUpdatesAsync();
+            if (update is null)
+            {
+                await (_logService?.InfoAsync("update", "No update available.", new { version = AppVersion.Current }) ?? Task.CompletedTask);
+                return;
+            }
+
+            var targetVersion = update.TargetFullRelease.Version.ToString();
+            await (_logService?.InfoAsync("update", "Update found; downloading.", new
+            {
+                current = AppVersion.Current,
+                target = targetVersion
+            }) ?? Task.CompletedTask);
+
+            await updater.DownloadUpdatesAsync(update);
+            updater.StageUpdateForRestart(update);
+            await (_logService?.InfoAsync("update", "Update downloaded; restarting to apply.", new { target = targetVersion }) ?? Task.CompletedTask);
+            await Dispatcher.InvokeAsync(() => Shutdown(0));
+        }
+        catch (Exception ex)
+        {
+            await (_logService?.WriteAsync("warning", "update", "Update check failed.", new
+            {
+                error = ex.Message,
+                type = ex.GetType().Name
+            }) ?? Task.CompletedTask);
+        }
     }
 
     private void OnDisplaySettingsChanged(object? sender, EventArgs e)

@@ -1,0 +1,72 @@
+name: Release
+
+# Pushing a tag like v0.2.0 builds the app, packages it with Velopack,
+# and publishes a GitHub release with the installer + auto-update artifacts.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Compute version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test .\desktop-html.sln --nologo
+
+      - name: Publish
+        run: >
+          dotnet publish .\DesktopHtml.App\DesktopHtml.App.csproj
+          -c Release -r win-x64 --self-contained false
+          -o .\publish
+          -p:Version=${{ steps.version.outputs.version }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Download previous releases (for delta updates)
+        # Fails when no release exists yet; that's fine for the first release.
+        continue-on-error: true
+        run: >
+          vpk download github
+          --repoUrl https://github.com/${{ github.repository }}
+          --token ${{ secrets.GITHUB_TOKEN }}
+          --outputDir .\releases
+
+      - name: Pack with Velopack
+        run: >
+          vpk pack
+          --packId DesktopHtml
+          --packVersion ${{ steps.version.outputs.version }}
+          --packDir .\publish
+          --mainExe desktop-html.exe
+          --packTitle "desktop.html"
+          --packAuthors "cpc2"
+          --framework net8.0-x64-desktop
+          --outputDir .\releases
+
+      - name: Upload GitHub release
+        run: >
+          vpk upload github
+          --repoUrl https://github.com/${{ github.repository }}
+          --token ${{ secrets.GITHUB_TOKEN }}
+          --publish
+          --releaseName "desktop.html ${{ steps.version.outputs.version }}"
+          --tag ${{ github.ref_name }}
+          --outputDir .\releases

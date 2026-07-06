@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4022.49" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -20,6 +21,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>DesktopHtml.App.Program</StartupObject>
     <AssemblyName>desktop-html</AssemblyName>
+    <!-- Overridden by the release workflow with -p:Version=<tag>. -->
+    <Version>0.1.0-dev</Version>
     <!-- Precompile to native code on publish so cold start skips most JIT work. -->
     <PublishReadyToRun>true</PublishReadyToRun>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
