@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using DesktopHtml.Core;
 using DesktopHtml.Core.Configuration;
+using DesktopHtml.Core.Ipc;
 using DesktopHtml.Core.Logging;
 using DesktopHtml.Core.Skins;
 using Velopack;
@@ -39,6 +40,25 @@ public static class Program
         if (args.Length > 0)
         {
             return CliRunner.RunAsync(args, paths, configService).GetAwaiter().GetResult();
+        }
+
+        // Only one desktop host may run at a time; a second launch just surfaces
+        // the settings window of the running instance.
+        using var singleInstanceMutex = new Mutex(initiallyOwned: true, @"Local\desktop-html-host", out var isFirstInstance);
+        if (!isFirstInstance)
+        {
+            logService.InfoAsync("app", "Another desktop.html instance is already running; opening its settings and exiting.")
+                .GetAwaiter().GetResult();
+            try
+            {
+                new RuntimeIpcClient().SendAsync("openSettings").GetAwaiter().GetResult();
+            }
+            catch
+            {
+                // The running instance is still starting up or shutting down; nothing else to do.
+            }
+
+            return 0;
         }
 
         var app = new App();

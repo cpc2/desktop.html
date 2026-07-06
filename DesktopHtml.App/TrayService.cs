@@ -36,13 +36,31 @@ public sealed class TrayService : IDisposable
 
         _notifyIcon = new Forms.NotifyIcon
         {
-            Icon = Drawing.SystemIcons.Application,
+            Icon = LoadAppIcon(),
             ContextMenuStrip = menu,
             Text = BuildTooltip(config),
             Visible = config.App.ShowTrayIcon
         };
 
         _notifyIcon.DoubleClick += async (_, _) => await RunMenuActionAsync("openSettings", _hostActions.OpenSettingsAsync);
+    }
+
+    private static Drawing.Icon LoadAppIcon()
+    {
+        try
+        {
+            if (Environment.ProcessPath is { } exePath
+                && Drawing.Icon.ExtractAssociatedIcon(exePath) is { } icon)
+            {
+                return icon;
+            }
+        }
+        catch
+        {
+            // Fall through to the stock icon.
+        }
+
+        return Drawing.SystemIcons.Application;
     }
 
     /// <summary>Shows a balloon notification from the tray icon (desktop.notify).</summary>

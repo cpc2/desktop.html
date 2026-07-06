@@ -21,6 +21,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>DesktopHtml.App.Program</StartupObject>
     <AssemblyName>desktop-html</AssemblyName>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- Overridden by the release workflow with -p:Version=<tag>. -->
     <Version>0.1.0-dev</Version>
     <!-- Precompile to native code on publish so cold start skips most JIT work. -->
