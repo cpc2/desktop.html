@@ -138,6 +138,21 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// The host must keep filling its monitor in physical pixels; WPF's
+    /// default WM_DPICHANGED handling resizes the window to preserve its DIP
+    /// size instead. Deferred so placement is not re-entered while the move
+    /// that triggered the DPI change is still inside SetWindowPos.
+    /// </summary>
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi);
+        if (IsLoaded)
+        {
+            Dispatcher.BeginInvoke(ApplyDesktopPlacement, System.Windows.Threading.DispatcherPriority.Background);
+        }
+    }
+
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <!--
+        Per-monitor DPI awareness. Without this the process is system-DPI
+        aware: its DPI is fixed at launch, so moving hosts between monitors
+        with different scale factors (e.g. 1080p @ 100% and 4K @ 150%) makes
+        DWM bitmap-stretch the window while WebView2 keeps its own scale,
+        which offsets mouse hit-testing from the rendered page.
+      -->
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/pm</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>

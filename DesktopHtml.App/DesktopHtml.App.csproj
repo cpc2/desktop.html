@@ -22,6 +22,15 @@
     <StartupObject>DesktopHtml.App.Program</StartupObject>
     <AssemblyName>desktop-html</AssemblyName>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!-- Declares PerMonitorV2 DPI awareness; see app.manifest. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!--
+      WFAC010 wants DPI configured via the WinForms ApplicationHighDpiMode,
+      but that only applies through ApplicationConfiguration.Initialize(),
+      which this WPF host (WinForms is tray-icon only) never calls; the
+      manifest is what WPF actually honors.
+    -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
     <!-- Overridden by the release workflow with -p:Version=<tag>. -->
     <Version>0.1.0-dev</Version>
     <!-- Precompile to native code on publish so cold start skips most JIT work. -->

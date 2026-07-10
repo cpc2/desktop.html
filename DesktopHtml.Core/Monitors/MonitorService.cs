@@ -34,7 +34,7 @@ public sealed class MonitorService
                     ToRectangle(info.Monitor),
                     ToRectangle(info.WorkArea),
                     (info.Flags & NativeMethods.MonitorInfoPrimary) != 0,
-                    1.0));
+                    GetDpiScale(monitorHandle)));
 
                 return true;
             },
@@ -76,12 +76,33 @@ public sealed class MonitorService
         return new DesktopRectangle(left, top, right - left, bottom - top);
     }
 
+    private static double GetDpiScale(IntPtr monitorHandle)
+    {
+        try
+        {
+            if (NativeMethods.GetDpiForMonitor(monitorHandle, NativeMethods.MdtEffectiveDpi, out var dpiX, out _) == 0
+                && dpiX > 0)
+            {
+                return dpiX / 96.0;
+            }
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+        }
+
+        return 1.0;
+    }
+
     private static DesktopRectangle ToRectangle(NativeMethods.Rect rect) =>
         new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
 
     private static class NativeMethods
     {
         public const int MonitorInfoPrimary = 0x00000001;
+        public const int MdtEffectiveDpi = 0;
+
+        [DllImport("shcore.dll")]
+        public static extern int GetDpiForMonitor(IntPtr monitorHandle, int dpiType, out uint dpiX, out uint dpiY);
 
         public delegate bool MonitorEnumProc(
             IntPtr monitorHandle,

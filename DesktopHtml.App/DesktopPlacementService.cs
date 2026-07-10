@@ -57,7 +57,7 @@ public sealed class DesktopPlacementService
 
             window.ShowInTaskbar = config.Desktop.ShowInTaskbar;
             ApplyAltTabStyle(handle, config.Desktop.ShowInAltTab);
-            ApplyWindowBounds(window, targetBounds);
+            ApplyWindowBounds(handle, targetBounds);
 
             if (string.Equals(requestedMode, WorkerWPlacementMode, StringComparison.OrdinalIgnoreCase))
             {
@@ -86,7 +86,7 @@ public sealed class DesktopPlacementService
         {
             error = ex.Message;
             appliedMode = fallbackMode;
-            TryApplyStageAFallback(handle, window, targetBounds);
+            TryApplyStageAFallback(handle, targetBounds);
             LogPlacementFailure(window, requestedMode, fallbackMode, targetBounds, ex);
         }
 
@@ -125,7 +125,7 @@ public sealed class DesktopPlacementService
 
             window.ShowInTaskbar = config.Desktop.ShowInTaskbar;
             ApplyAltTabStyle(handle, config.Desktop.ShowInAltTab);
-            ApplyWindowBounds(window, targetBounds);
+            ApplyWindowBounds(handle, targetBounds);
             ApplyShowDesktopZOrder(handle, targetBounds);
 
             var state = new PlacementState(
@@ -151,7 +151,7 @@ public sealed class DesktopPlacementService
                 NormalizeFallbackMode(config.Desktop.FallbackPlacementMode),
                 targetBounds,
                 ex);
-            TryApplyStageAFallback(handle, window, targetBounds);
+            TryApplyStageAFallback(handle, targetBounds);
             return new PlacementApplyResult(
                 NormalizeFallbackMode(config.Desktop.FallbackPlacementMode),
                 targetBounds,
@@ -447,12 +447,36 @@ public sealed class DesktopPlacementService
             | SetWindowPosFlags.FrameChanged);
     }
 
-    private static void ApplyWindowBounds(Window window, DesktopRectangle targetBounds)
+    /// <summary>
+    /// Positions the window via SetWindowPos because the target bounds are
+    /// physical pixels; WPF's Left/Top/Width/Height are DIPs and would land
+    /// wrong on any monitor whose scale factor is not 100%. Moving onto a
+    /// monitor with a different DPI raises WM_DPICHANGED mid-move and WPF's
+    /// default handling can replace the rectangle with the OS-suggested one,
+    /// so the bounds are asserted a second time when they did not stick.
+    /// </summary>
+    private static void ApplyWindowBounds(IntPtr handle, DesktopRectangle targetBounds)
     {
-        window.Left = targetBounds.Left;
-        window.Top = targetBounds.Top;
-        window.Width = targetBounds.Width;
-        window.Height = targetBounds.Height;
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            NativeMethods.SetWindowPos(
+                handle,
+                IntPtr.Zero,
+                targetBounds.Left,
+                targetBounds.Top,
+                targetBounds.Width,
+                targetBounds.Height,
+                SetWindowPosFlags.NoZOrder | SetWindowPosFlags.NoActivate);
+
+            if (NativeMethods.GetWindowRect(handle, out var rect)
+                && rect.Left == targetBounds.Left
+                && rect.Top == targetBounds.Top
+                && rect.Right == targetBounds.Right
+                && rect.Bottom == targetBounds.Bottom)
+            {
+                break;
+            }
+        }
     }
 
     private static void ApplyStageAPlacement(IntPtr handle, DesktopRectangle targetBounds)
@@ -479,11 +503,11 @@ public sealed class DesktopPlacementService
             SetWindowPosFlags.NoActivate | SetWindowPosFlags.NoOwnerZOrder | SetWindowPosFlags.ShowWindow);
     }
 
-    private static void TryApplyStageAFallback(IntPtr handle, Window window, DesktopRectangle targetBounds)
+    private static void TryApplyStageAFallback(IntPtr handle, DesktopRectangle targetBounds)
     {
         try
         {
-            ApplyWindowBounds(window, targetBounds);
+            ApplyWindowBounds(handle, targetBounds);
             ApplyStageAPlacement(handle, targetBounds);
         }
         catch
@@ -688,6 +712,18 @@ public sealed class DesktopPlacementService
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr SetParent(IntPtr childHandle, IntPtr newParentHandle);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool GetWindowRect(IntPtr handle, out WindowRect rect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WindowRect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern IntPtr SendMessageTimeout(
