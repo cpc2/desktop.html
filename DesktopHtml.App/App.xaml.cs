@@ -372,6 +372,7 @@ public partial class App : System.Windows.Application
         _showDesktopPlacementActive = true;
         foreach (var window in _windows.Where(window => window.IsLoaded))
         {
+            window.RefreshMonitorSnapshot();
             _placementService.ApplyShowDesktopPlacement(window, _config);
         }
 

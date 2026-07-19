@@ -50,9 +50,29 @@ public partial class MainWindow : Window
         await InitializeWebViewAsync();
     }
 
-    private void ApplyDesktopPlacement() => _placementService.ApplyPlacement(this, _config);
+    private void ApplyDesktopPlacement()
+    {
+        RefreshMonitorSnapshot();
+        _placementService.ApplyPlacement(this, _config);
+    }
 
     public void ReapplyDesktopPlacement() => ApplyDesktopPlacement();
+
+    public void RefreshMonitorSnapshot()
+    {
+        if (_monitor is null || string.Equals(_monitor.Id, "span", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var refreshed = new MonitorService().GetMonitors()
+            .FirstOrDefault(candidate => string.Equals(candidate.Id, _monitor.Id, StringComparison.OrdinalIgnoreCase));
+        if (refreshed is not null)
+        {
+            _monitor = refreshed;
+            ApplyTitle();
+        }
+    }
 
     private async Task InitializeWebViewAsync()
     {

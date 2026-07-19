@@ -14,6 +14,10 @@ public static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Must precede Velopack, WPF, WinForms, monitor enumeration, and any
+        // HWND creation so Windows never virtualizes monitor coordinates.
+        DpiAwarenessBootstrap.EnablePerMonitorV2();
+
         // Must run first: handles Velopack install/update/uninstall hooks
         // (Start Menu shortcuts, version migration) and exits early during them.
         VelopackApp.Build().Run();
@@ -33,7 +37,8 @@ public static class Program
         logService.InfoAsync("app", "desktop.html starting.", new
         {
             AppVersion.Current,
-            args = args.Length
+            args = args.Length,
+            dpiAwareness = DpiAwarenessBootstrap.DescribeCurrentThread()
         }).GetAwaiter().GetResult();
         new SampleSkinWriter(paths).EnsureInstalledAsync().GetAwaiter().GetResult();
 

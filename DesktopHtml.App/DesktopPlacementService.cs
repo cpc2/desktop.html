@@ -17,6 +17,7 @@ public sealed class DesktopPlacementService
     private const int GwlExStyle = -20;
     private const long WsExToolWindow = 0x00000080L;
     private const long WsExAppWindow = 0x00040000L;
+    private const long WsExTopmost = 0x00000008L;
     private const string ShowDesktopPlacementMode = "show-desktop";
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly IntPtr HwndBottom = new(1);
@@ -327,13 +328,26 @@ public sealed class DesktopPlacementService
                 null);
         }
 
+        DesktopRectangle? actualBounds = null;
+        if (NativeMethods.GetWindowRect(handle, out var actualRect))
+        {
+            actualBounds = new DesktopRectangle(
+                actualRect.Left,
+                actualRect.Top,
+                actualRect.Right - actualRect.Left,
+                actualRect.Bottom - actualRect.Top);
+        }
+
+        var extendedStyle = NativeMethods.GetWindowLongPtr(handle, GwlExStyle).ToInt64();
         return new HostWindowDiagnostics(
             state.Handle,
             state.MonitorId,
             state.Title,
             state.TargetBounds,
+            actualBounds,
             state.RequestedPlacementMode,
             state.AppliedPlacementMode,
+            (extendedStyle & WsExTopmost) != 0,
             state.WorkerWAttached,
             state.ParentHandle,
             state.LastPlacementError);
@@ -493,6 +507,11 @@ public sealed class DesktopPlacementService
 
     private static void ApplyShowDesktopZOrder(IntPtr handle, DesktopRectangle targetBounds)
     {
+        // Show Desktop places Explorer's icon surface above ordinary windows.
+        // Enter the topmost band so the interactive wallpaper remains visible,
+        // then place it immediately behind the shell taskbar. The window is
+        // demoted again by ApplyStageAPlacement when desktop reveal ends.
+        var taskbarHandle = FindTaskbarForBounds(targetBounds);
         NativeMethods.SetWindowPos(
             handle,
             HwndTopmost,
@@ -501,6 +520,61 @@ public sealed class DesktopPlacementService
             targetBounds.Width,
             targetBounds.Height,
             SetWindowPosFlags.NoActivate | SetWindowPosFlags.NoOwnerZOrder | SetWindowPosFlags.ShowWindow);
+
+        if (taskbarHandle != IntPtr.Zero)
+        {
+            NativeMethods.SetWindowPos(
+                handle,
+                taskbarHandle,
+                targetBounds.Left,
+                targetBounds.Top,
+                targetBounds.Width,
+                targetBounds.Height,
+                SetWindowPosFlags.NoActivate | SetWindowPosFlags.NoOwnerZOrder | SetWindowPosFlags.ShowWindow);
+        }
+    }
+
+    private static IntPtr FindTaskbarForBounds(DesktopRectangle targetBounds)
+    {
+        foreach (var handle in EnumerateTopLevelWindows())
+        {
+            var className = GetClassName(handle);
+            if (!string.Equals(className, "Shell_TrayWnd", StringComparison.Ordinal)
+                && !string.Equals(className, "Shell_SecondaryTrayWnd", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (NativeMethods.GetWindowRect(handle, out var taskbarRect)
+                && TouchesOrOverlaps(targetBounds, taskbarRect))
+            {
+                return handle;
+            }
+        }
+
+        // Explorer always exposes the primary taskbar under this class, but it
+        // is only a safe z-order anchor when it actually sits on this monitor —
+        // anchoring behind another monitor's taskbar would demote the window
+        // for no reason. Verify the rectangle before using it.
+        var primaryTaskbar = NativeMethods.FindWindow("Shell_TrayWnd", null);
+        if (primaryTaskbar != IntPtr.Zero
+            && NativeMethods.GetWindowRect(primaryTaskbar, out var primaryRect)
+            && TouchesOrOverlaps(targetBounds, primaryRect))
+        {
+            return primaryTaskbar;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    private static bool TouchesOrOverlaps(DesktopRectangle area, NativeMethods.WindowRect candidate)
+    {
+        var overlapsHorizontally = candidate.Left < area.Right && candidate.Right > area.Left;
+        var overlapsVertically = candidate.Top < area.Bottom && candidate.Bottom > area.Top;
+        var touchesHorizontalEdge = candidate.Right == area.Left || candidate.Left == area.Right;
+        var touchesVerticalEdge = candidate.Bottom == area.Top || candidate.Top == area.Bottom;
+        return (overlapsHorizontally && (overlapsVertically || touchesVerticalEdge))
+            || (overlapsVertically && touchesHorizontalEdge);
     }
 
     private static void TryApplyStageAFallback(IntPtr handle, DesktopRectangle targetBounds)
@@ -519,7 +593,14 @@ public sealed class DesktopPlacementService
     {
         if (monitor is not null)
         {
-            return avoidTaskbar ? monitor.WorkArea : monitor.Bounds;
+            return MonitorBoundsResolver.SelectTargetBounds(monitor, avoidTaskbar);
+        }
+
+        var primaryMonitor = new MonitorService().GetMonitors()
+            .FirstOrDefault(candidate => candidate.IsPrimary);
+        if (primaryMonitor is not null)
+        {
+            return MonitorBoundsResolver.SelectTargetBounds(primaryMonitor, avoidTaskbar);
         }
 
         var area = avoidTaskbar ? SystemParameters.WorkArea : new Rect(0, 0, SystemParameters.PrimaryScreenWidth, SystemParameters.PrimaryScreenHeight);
@@ -779,8 +860,10 @@ public sealed record HostWindowDiagnostics(
     string? MonitorId,
     string Title,
     DesktopRectangle TargetBounds,
+    DesktopRectangle? ActualBounds,
     string RequestedPlacementMode,
     string AppliedPlacementMode,
+    bool IsTopmost,
     bool WorkerWAttached,
     string? ParentHandle,
     string? LastPlacementError);
