@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>desktop.html — your desktop is a website</title>
+<meta name="description" content="A Windows 11 desktop runtime that turns your desktop into a fully customizable local HTML/CSS/JavaScript skin.">
+<link rel="icon" type="image/png" href="site-assets/logo.png">
+<style>
+  :root {
+    --bg: #0d0c12;
+    --bg-soft: #15131d;
+    --border: #2a2638;
+    --text: #e8e5f2;
+    --muted: #9a93b0;
+    --grad-a: #7b7ac6;
+    --grad-b: #a570dd;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .glow {
+    position: fixed;
+    top: -300px; left: 50%;
+    width: 900px; height: 600px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(147, 112, 219, 0.14), transparent 65%);
+    pointer-events: none;
+  }
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 96px 24px 48px;
+    position: relative;
+  }
+  .hero { text-align: center; }
+  .hero img.logo {
+    width: 96px; height: 96px;
+    filter: drop-shadow(0 0 32px rgba(165, 112, 221, 0.4));
+  }
+  .hero h1 {
+    margin-top: 20px;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p.tagline {
+    margin: 14px auto 0;
+    max-width: 34em;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+  .actions {
+    margin-top: 36px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(120deg, var(--grad-a), var(--grad-b));
+    box-shadow: 0 4px 24px rgba(165, 112, 221, 0.25);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 32px rgba(165, 112, 221, 0.4); }
+  .btn-ghost {
+    color: var(--text);
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+  .btn-ghost:hover { border-color: var(--grad-b); }
+  .btn svg { width: 18px; height: 18px; fill: currentColor; }
+  .version {
+    margin-top: 14px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    min-height: 1.4em;
+  }
+  .version a { color: var(--grad-b); text-decoration: none; }
+  .version a:hover { text-decoration: underline; }
+
+  .blurb {
+    margin: 80px auto 0;
+    max-width: 44em;
+    text-align: center;
+    color: var(--muted);
+  }
+  .blurb strong { color: var(--text); font-weight: 600; }
+  .blurb code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+
+  .shots {
+    margin-top: 72px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 640px) { .shots { grid-template-columns: 1fr; } }
+  .shot {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-soft);
+    overflow: hidden;
+  }
+  .shot img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .shot .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4d475f;
+    font-size: 2rem;
+    font-weight: 300;
+    user-select: none;
+  }
+
+  .warning {
+    margin: 72px auto 0;
+    max-width: 44em;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--grad-b);
+    border-radius: 10px;
+    background: var(--bg-soft);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .warning strong { color: var(--text); }
+
+  footer {
+    margin-top: 96px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  footer a { color: var(--grad-b); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<main>
+  <section class="hero">
+    <img class="logo" src="site-assets/logo.png" alt="desktop.html logo">
+    <h1>desktop.html</h1>
+    <p class="tagline">Your Windows desktop, rebuilt as a website. Load a local HTML/CSS/JavaScript skin straight onto the desktop surface and make it do whatever you want.</p>
+    <div class="actions">
+      <a id="download-btn" class="btn btn-primary" href="https://github.com/cpc2/desktop.html/releases/latest">
+        <svg viewBox="0 0 16 16"><path d="M7.47 10.78a.75.75 0 0 0 1.06 0l3.75-3.75a.75.75 0 0 0-1.06-1.06L8.75 8.44V1.75a.75.75 0 0 0-1.5 0v6.69L4.78 5.97a.75.75 0 0 0-1.06 1.06l3.75 3.75ZM3.75 13a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z"/></svg>
+        Download for Windows
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/cpc2/desktop.html">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="version" id="version"></p>
+  </section>
+
+  <section class="blurb">
+    <p>desktop.html is a Windows 11 runtime that hosts trusted local skins in a WebView2 surface placed behind your icons — no taskbar entry, no Alt-Tab noise. Skins talk to the OS through a promise-based <code>window.desktop</code> bridge: launch apps, run commands, read files, control media, and more. Multi-monitor aware, with per-monitor and spanning modes, a CLI, and automatic updates.</p>
+  </section>
+
+  <section class="shots">
+    <figure class="shot"><div class="placeholder">δ</div><img src="site-assets/screenshots/1.png" alt="Screenshot 1" onerror="this.remove()"></figure>
+    <figure class="shot"><div class="placeholder">δ</div><img src="site-assets/screenshots/2.png" alt="Screenshot 2" onerror="this.remove()"></figure>
+    <figure class="shot"><div class="placeholder">δ</div><img src="site-assets/screenshots/3.png" alt="Screenshot 3" onerror="this.remove()"></figure>
+    <figure class="shot"><div class="placeholder">δ</div><img src="site-assets/screenshots/4.png" alt="Screenshot 4" onerror="this.remove()"></figure>
+  </section>
+
+  <section class="warning">
+    <strong>Heads up:</strong> skins are local programs. They can open files, run commands, and reach the network through the desktop bridge. Only install skins from sources you trust.
+  </section>
+
+  <footer>
+    <p>Licensed under GPL-3.0-or-later · <a href="https://github.com/cpc2/desktop.html">Source</a> · <a href="https://github.com/cpc2/desktop.html/releases">Releases</a></p>
+  </footer>
+</main>
+<script>
+  fetch("https://api.github.com/repos/cpc2/desktop.html/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (rel) {
+      if (!rel || !rel.tag_name) return;
+      var setup = (rel.assets || []).find(function (a) { return /Setup\.exe$/i.test(a.name); });
+      if (setup) document.getElementById("download-btn").href = setup.browser_download_url;
+      document.getElementById("version").innerHTML =
+        'Latest release: <a href="' + rel.html_url + '">' + rel.tag_name + "</a>";
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>

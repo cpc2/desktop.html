@@ -34,6 +34,7 @@ dotnet test .\desktop-html.sln
 
 ## Documentation
 
+- [Project website](https://cpc2.github.io/desktop.html/)
 - [Skin authoring guide](docs/skin-authoring.md)
 - [Bridge API reference](docs/bridge-api.md)
 - [CLI reference](docs/cli.md)
