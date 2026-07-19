@@ -9,6 +9,11 @@
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="SettingsPage.html" />
+    <EmbeddedResource Include="SettingsPage.html" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- WinExe: no console window at launch; CLI mode attaches to the parent console instead. -->
     <OutputType>WinExe</OutputType>
