@@ -42,6 +42,7 @@ These are available because settings is also HTML. Normal skins can call them, b
 - `desktop.setStartupEnabled(enabled)`
 - `desktop.getStartupStatus()`
 - `desktop.openSkinFolder(skinId)`
+- `desktop.deleteSkin(skinId)` — moves the skin folder and its stored data to the Recycle Bin; fails while the skin is active or assigned to a monitor/spanning mode
 
 Valid monitor modes are `single-monitor`, `per-monitor`, and `spanning`.
 

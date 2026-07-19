@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using DesktopHtml.Core.Backups;
 using DesktopHtml.Core.Configuration;
+using DesktopHtml.Core.FileSystem;
 
 namespace DesktopHtml.Core.Skins;
 
@@ -263,6 +264,57 @@ public sealed class SkinStore
         }
 
         config.Skins.ActiveMode = normalized;
+    }
+
+    public void Delete(DesktopHtmlConfig config, string skinId, bool toRecycleBin = true, Action<string>? onWarning = null)
+    {
+        _paths.EnsureCreated();
+        var targetDirectory = GetSkinDirectory(skinId);
+
+        if (!Directory.Exists(targetDirectory))
+        {
+            throw new DirectoryNotFoundException($"Skin folder '{skinId}' does not exist.");
+        }
+
+        if (string.Equals(config.Skins.ActiveSkinId, skinId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Cannot delete skin because it is currently set as the active skin.");
+        }
+
+        if (config.Skins.PerMonitor.Values.Any(assignment => string.Equals(assignment.SkinId, skinId, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Cannot delete skin because it is currently assigned to one or more monitors.");
+        }
+
+        if (string.Equals(config.Skins.Spanning.SkinId, skinId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Cannot delete skin because it is currently assigned to spanning mode.");
+        }
+
+        DeleteDirectory(targetDirectory, toRecycleBin);
+
+        var storageDirectory = Path.Combine(_paths.StorageDirectory, skinId);
+        if (Directory.Exists(storageDirectory))
+        {
+            try
+            {
+                DeleteDirectory(storageDirectory, toRecycleBin);
+            }
+            catch (Exception ex)
+            {
+                onWarning?.Invoke($"Skin '{skinId}' was deleted, but its storage folder could not be removed: {ex.Message}");
+            }
+        }
+    }
+
+    private static void DeleteDirectory(string directory, bool toRecycleBin)
+    {
+        if (toRecycleBin && RecycleBin.TryMoveToRecycleBin(directory))
+        {
+            return;
+        }
+
+        Directory.Delete(directory, recursive: true);
     }
 
     private static void CopyDirectory(string sourceDirectory, string targetDirectory)

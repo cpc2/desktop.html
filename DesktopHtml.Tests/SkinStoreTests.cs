@@ -166,6 +166,91 @@ public sealed class SkinStoreTests
         Assert.True(File.Exists(Path.Combine(paths.SkinsDirectory, "example.wrapped", "manifest.json")));
     }
 
+    [Fact]
+    public async Task Delete_Succeeds_WhenSkinExistsAndIsNotInUse()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.valid", "Example Skin");
+        var store = new SkinStore(paths);
+        await store.InstallAsync(source, overwrite: false);
+        var config = ConfigService.CreateDefault();
+        config.Skins.ActiveSkinId = "some-other-skin";
+
+        var storageDir = Path.Combine(paths.StorageDirectory, "example.valid");
+        Directory.CreateDirectory(storageDir);
+        File.WriteAllText(Path.Combine(storageDir, "data.json"), "{}");
+
+        Assert.True(Directory.Exists(Path.Combine(paths.SkinsDirectory, "example.valid")));
+
+        // Permanent delete keeps test runs from filling the user's Recycle Bin.
+        store.Delete(config, "example.valid", toRecycleBin: false);
+
+        Assert.False(Directory.Exists(Path.Combine(paths.SkinsDirectory, "example.valid")));
+        Assert.False(Directory.Exists(storageDir));
+    }
+
+    [Fact]
+    public void Delete_Throws_WhenSkinDoesNotExist()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var store = new SkinStore(paths);
+        var config = ConfigService.CreateDefault();
+
+        Assert.Throws<DirectoryNotFoundException>(() => store.Delete(config, "nonexistent"));
+    }
+
+    [Fact]
+    public async Task Delete_Throws_WhenSkinIsActive()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.valid", "Example Skin");
+        var store = new SkinStore(paths);
+        await store.InstallAsync(source, overwrite: false);
+        var config = ConfigService.CreateDefault();
+        config.Skins.ActiveSkinId = "example.valid";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => store.Delete(config, "example.valid"));
+        Assert.Contains("active skin", ex.Message);
+    }
+
+    [Fact]
+    public async Task Delete_Throws_WhenSkinIsAssignedToMonitor()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.valid", "Example Skin");
+        var store = new SkinStore(paths);
+        await store.InstallAsync(source, overwrite: false);
+        var config = ConfigService.CreateDefault();
+        config.Skins.ActiveSkinId = "some-other-skin";
+        config.Skins.PerMonitor[@"\\.\DISPLAY2"] = new MonitorSkinAssignment
+        {
+            SkinId = "example.valid"
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(() => store.Delete(config, "example.valid"));
+        Assert.Contains("assigned to one or more monitors", ex.Message);
+    }
+
+    [Fact]
+    public async Task Delete_Throws_WhenSkinIsAssignedToSpanning()
+    {
+        using var temp = TempDirectory.Create();
+        var paths = CreatePaths(Path.Combine(temp.Path, "appdata"));
+        var source = CreateSkin(temp.Path, "example.valid", "Example Skin");
+        var store = new SkinStore(paths);
+        await store.InstallAsync(source, overwrite: false);
+        var config = ConfigService.CreateDefault();
+        config.Skins.ActiveSkinId = "some-other-skin";
+        config.Skins.Spanning.SkinId = "example.valid";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => store.Delete(config, "example.valid"));
+        Assert.Contains("assigned to spanning mode", ex.Message);
+    }
+
     private static string CreateSkin(string root, string id, string name)
     {
         var skinRoot = Path.Combine(root, "source-skin");

@@ -247,6 +247,7 @@ public sealed class DesktopBridgeDispatcher : IDisposable
             "setStartupEnabled" => SetStartupEnabledAsync(request.Params),
             "getStartupStatus" => Task.FromResult<object?>(new { enabled = new StartupService().IsEnabled() }),
             "openSkinFolder" => OpenSkinFolderAsync(request.Params),
+            "deleteSkin" => DeleteSkinAsync(request.Params),
             "reload" => HostActionAsync(_hostActions.ReloadSkinAsync),
             "reloadSkin" => HostActionAsync(_hostActions.ReloadSkinAsync),
             "openSettings" => HostActionAsync(_hostActions.OpenSettingsAsync),
@@ -333,6 +334,7 @@ public sealed class DesktopBridgeDispatcher : IDisposable
         "setStartupEnabled",
         "getStartupStatus",
         "openSkinFolder",
+        "deleteSkin",
         "reload",
         "reloadSkin",
         "openSettings",
@@ -622,6 +624,17 @@ public sealed class DesktopBridgeDispatcher : IDisposable
     {
         var skinId = GetRequiredString(parameters, "skinId");
         return ShellExecutePathAsync(new SkinStore(_paths).GetSkinDirectory(skinId));
+    }
+
+    private async Task<object?> DeleteSkinAsync(JsonElement parameters)
+    {
+        var skinId = GetRequiredString(parameters, "skinId");
+        var config = await LoadConfigForMutationAsync().ConfigureAwait(false);
+        new SkinStore(_paths).Delete(
+            config,
+            skinId,
+            onWarning: message => _ = _logService.WarningAsync("skins", message));
+        return null;
     }
 
     private static async Task<object?> HostActionAsync(Func<Task> action)

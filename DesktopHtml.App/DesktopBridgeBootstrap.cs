@@ -116,6 +116,7 @@ public static class DesktopBridgeBootstrap
     setStartupEnabled: enabled => call("setStartupEnabled", { enabled }),
     getStartupStatus: () => call("getStartupStatus"),
     openSkinFolder: skinId => call("openSkinFolder", { skinId }),
+    deleteSkin: skinId => call("deleteSkin", { skinId }),
     reload: () => call("reload"),
     reloadSkin: () => call("reloadSkin"),
     openSettings: () => call("openSettings"),
