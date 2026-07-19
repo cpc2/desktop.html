@@ -16,7 +16,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Build
-        run: dotnet build .\desktop-html.sln --nologo
+        run: dotnet build .\desktop-html.sln --nologo -c Release
 
       - name: Test
-        run: dotnet test .\desktop-html.sln --nologo --no-build
+        run: dotnet test .\desktop-html.sln --nologo --no-build -c Release
