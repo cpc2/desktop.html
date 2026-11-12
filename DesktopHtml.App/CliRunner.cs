@@ -765,10 +765,17 @@ public static class CliRunner
 
     private static int StartupStatus(string[] args)
     {
-        var enabled = new StartupService().IsEnabled();
+        var startupService = new StartupService();
+        var registered = startupService.IsRegistered();
+        var disabledByWindows = registered && startupService.IsDisabledByWindows();
+        var enabled = registered && !disabledByWindows;
         if (args.Contains("--json"))
         {
-            Console.WriteLine(JsonSerializer.Serialize(new { enabled }, JsonOptions));
+            Console.WriteLine(JsonSerializer.Serialize(new { enabled, disabledByWindows }, JsonOptions));
+        }
+        else if (disabledByWindows)
+        {
+            Console.WriteLine("Startup: disabled (switched off in Windows' startup apps; run `desktop-html startup on` to re-enable)");
         }
         else
         {
@@ -831,7 +838,7 @@ public static class CliRunner
         var startupService = new StartupService();
         if (enabled)
         {
-            startupService.Enable(ResolveExecutablePath());
+            startupService.Enable(ResolveExecutablePath(), clearWindowsDisable: true);
         }
         else
         {

@@ -245,7 +245,7 @@ public sealed class DesktopBridgeDispatcher : IDisposable
             "configureSpanning" => ConfigureSpanningAsync(request.Params),
             "setMonitorMode" => SetMonitorModeAsync(request.Params),
             "setStartupEnabled" => SetStartupEnabledAsync(request.Params),
-            "getStartupStatus" => Task.FromResult<object?>(new { enabled = new StartupService().IsEnabled() }),
+            "getStartupStatus" => Task.FromResult<object?>(GetStartupStatus()),
             "openSkinFolder" => OpenSkinFolderAsync(request.Params),
             "deleteSkin" => DeleteSkinAsync(request.Params),
             "reload" => HostActionAsync(_hostActions.ReloadSkinAsync),
@@ -598,6 +598,14 @@ public sealed class DesktopBridgeDispatcher : IDisposable
         return await SaveAndRefreshAsync(config, "monitor-mode").ConfigureAwait(false);
     }
 
+    private static object GetStartupStatus()
+    {
+        var startupService = new StartupService();
+        var registered = startupService.IsRegistered();
+        var disabledByWindows = registered && startupService.IsDisabledByWindows();
+        return new { enabled = registered && !disabledByWindows, disabledByWindows };
+    }
+
     private async Task<object?> SetStartupEnabledAsync(JsonElement parameters)
     {
         var enabled = GetOptionalBool(parameters, "enabled")
@@ -606,7 +614,7 @@ public sealed class DesktopBridgeDispatcher : IDisposable
         var startupService = new StartupService();
         if (enabled)
         {
-            startupService.Enable(ResolveExecutablePath());
+            startupService.Enable(ResolveExecutablePath(), clearWindowsDisable: true);
         }
         else
         {
