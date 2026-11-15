@@ -107,6 +107,33 @@ public sealed class DesktopPlacementService
         return new PlacementApplyResult(appliedMode, targetBounds, attachedToWorkerW, error);
     }
 
+    /// <summary>
+    /// True when a host window no longer covers what its monitor's target bounds are now. This happens after a
+    /// display change: Windows can report a monitor's work area as the whole monitor for a moment, before the
+    /// taskbar has reclaimed its strip, so the window is placed over the taskbar and no later event moves it back.
+    /// A window that covers the whole monitor then counts as a fullscreen app, and the taskbar hides behind it
+    /// whenever it has focus.
+    /// </summary>
+    public bool IsOutOfPlace(MainWindow window, DesktopHtmlConfig config)
+    {
+        var handle = new WindowInteropHelper(window).Handle;
+        var monitorId = window.MonitorId;
+        if (handle == IntPtr.Zero || monitorId is null || string.Equals(monitorId, "span", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var monitor = new MonitorService().GetMonitors()
+            .FirstOrDefault(candidate => string.Equals(candidate.Id, monitorId, StringComparison.OrdinalIgnoreCase));
+        if (monitor is null || !NativeMethods.GetWindowRect(handle, out var rect))
+        {
+            return false;
+        }
+
+        var target = MonitorBoundsResolver.SelectTargetBounds(monitor, config.Desktop.AvoidTaskbar);
+        return rect.Left != target.Left || rect.Top != target.Top || rect.Right != target.Right || rect.Bottom != target.Bottom;
+    }
+
     public PlacementApplyResult ApplyShowDesktopPlacement(MainWindow window, DesktopHtmlConfig config)
     {
         var handle = new WindowInteropHelper(window).Handle;

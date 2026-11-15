@@ -26,6 +26,7 @@ public partial class App : System.Windows.Application
     private DesktopRevealService? _desktopRevealService;
     private ShellSnapshot? _lastShellSnapshot;
     private bool _placementRecoveryTickRunning;
+    private DateTimeOffset _lastOutOfPlaceReapplyUtc = DateTimeOffset.MinValue;
     private bool _showDesktopPlacementActive;
     private bool _desktopRevealHandlerRunning;
 
@@ -391,6 +392,38 @@ public partial class App : System.Windows.Application
             && new WindowInteropHelper(window).Handle == handle);
     }
 
+    /// <summary>
+    /// Puts host windows back on their monitor's work area when they've drifted off it (see
+    /// DesktopPlacementService.IsOutOfPlace), at most every ten seconds so a window that won't move can't make
+    /// this loop.
+    /// </summary>
+    private async Task ReapplyIfOutOfPlaceAsync()
+    {
+        // while "show desktop" placement is up, the reveal monitor owns placement and puts it back itself
+        if (_placementService is null || _hostActions is null || _config is null || _showDesktopPlacementActive
+            || DateTimeOffset.UtcNow - _lastOutOfPlaceReapplyUtc < TimeSpan.FromSeconds(10))
+        {
+            return;
+        }
+
+        // a minimized host reports a parked rect (-32000); the minimize handler deals with that, not this
+        var drifted = _windows
+            .Where(window => window.IsLoaded && window.WindowState != WindowState.Minimized
+                && _placementService.IsOutOfPlace(window, _config))
+            .ToArray();
+        if (drifted.Length == 0)
+        {
+            return;
+        }
+
+        _lastOutOfPlaceReapplyUtc = DateTimeOffset.UtcNow;
+        await (_logService?.InfoAsync("placement", "Host window no longer matches its monitor's work area; reapplying desktop placement.", new
+        {
+            monitors = drifted.Select(window => window.MonitorId).ToArray()
+        }) ?? Task.CompletedTask);
+        await _hostActions.ReapplyPlacementAsync("workAreaChanged");
+    }
+
     private async void OnPlacementRecoveryTimerTick(object? sender, EventArgs e)
     {
         if (_placementRecoveryTickRunning || _placementService is null || _hostActions is null)
@@ -410,6 +443,7 @@ public partial class App : System.Windows.Application
 
             if (!currentSnapshot.HasChanged(_lastShellSnapshot))
             {
+                await ReapplyIfOutOfPlaceAsync();
                 return;
             }
 
